@@ -74,6 +74,36 @@ def chooseBestColumnToSplit(dataset):
     return np.argsort(-ret_set)[0]
 
 # 创建决策树
+# 树的数据结构可以用类实现也可以用字典实现，本例用字典实现
+# 字段内容：
+''' TREE_DICT:
+    {
+        arg: 属性名称
+        leafs:[{value: 属性可取值1, node_type:label/tree, node:LABEL/TREE_DICT},
+                {value: 属性可取值2, node_type:label/tree, node:LABEL/TREE_DICT]
+    }
+'''
+# 入参为dataset，arglabel 返回值为 TREE_DICT
+def createTree(dataset, arglabel):
+    # 先判断最终分类是否仅有一种，若如此则直接返回分类
+    pass
+    # 再判断属性列是否仅为1，若为1，则返回该列中第一个
+    # 出现的最多次数的分类（最好的情况是当属性列为1时，所有的分类均相同）
+    pass
+    # 上述两种情况不满足，则需要继续创建子树
+    TREE_DICT = {}
+    #  根据函数chooseBestColumnToSplit 获取本节点的属性值（arg: 属性名称）
+    #  遍历该列的不同值生成leafs
+    '''
+        d = {}
+        d['value'] = 属性可取值1
+        d['node'] = createTree(subdataset, subarglabel)
+        d['node_type'] = 'tree' if isinstance(d['node'], dict) else label
+        TREE_DICT['leafs'].append(d)
+
+    '''
+
+    return TREE_DICT
 
 def main(argv=None):
     if not argv:
