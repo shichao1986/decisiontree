@@ -4,6 +4,10 @@ import sys
 import numpy as np
 from collections import Counter
 
+class MyExcept(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+
 # 获取dataset，决策树不一定是二叉树，每一个属性的值可以有多个，本例中0，1为特例
 def getDataset():
     # 属性和最终分类，确定是否为鱼类，最终类型仅有两种是鱼类和非鱼类
@@ -78,32 +82,70 @@ def chooseBestColumnToSplit(dataset):
 # 字段内容：
 ''' TREE_DICT:
     {
-        arg: 属性名称
-        leafs:[{value: 属性可取值1, node_type:label/tree, node:LABEL/TREE_DICT},
-                {value: 属性可取值2, node_type:label/tree, node:LABEL/TREE_DICT]
+        arg: 属性名称(值为any时直接取label为结果，否则继续遍历leafs)
+        leafs:[{value: 属性可取值1, node:TREE_DICT},
+                {value: 属性可取值2, node:TREE_DICT]
+        label:分类结果
     }
 '''
 # 入参为dataset，arglabel 返回值为 TREE_DICT
 def createTree(dataset, arglabel):
+    tree_dict = {}
     # 先判断最终分类是否仅有一种，若如此则直接返回分类
-    pass
+    label_set = set(dataset[:][-1].tolist())
+    if len(label_set) == 1:
+        tree_dict['arg'] = 'any'
+        tree_dict['leafs'] = []
+        tree_dict['label'] = label_set[0]
+        return tree_dict
+
     # 再判断属性列是否仅为1，若为1，则返回该列中第一个
     # 出现的最多次数的分类（最好的情况是当属性列为1时，所有的分类均相同）
-    pass
+    if dataset.shape[1] == 1+1: #仅剩的最后一列和标签列
+        tree_dict['arg'] = arglabel[0]  #仅剩最后一个label
+        tree_dict['leafs'] = []
+        tree_dict['label'] = Counter(dataset[:][-1].tolist()).most_common(1)[0][0]
+        return tree_dict
     # 上述两种情况不满足，则需要继续创建子树
-    TREE_DICT = {}
     #  根据函数chooseBestColumnToSplit 获取本节点的属性值（arg: 属性名称）
     #  遍历该列的不同值生成leafs
     '''
         d = {}
         d['value'] = 属性可取值1
         d['node'] = createTree(subdataset, subarglabel)
-        d['node_type'] = 'tree' if isinstance(d['node'], dict) else label
         TREE_DICT['leafs'].append(d)
 
     '''
+    choose_idx = chooseBestColumnToSplit(dataset)
+    tree_dict['arg'] = arglabel[choose_idx]
+    arglabel.pop(choose_idx)
+    tree_dict['label'] = ''
+    tree_dict['leafs'] = []
+    choose_vals = set(dataset[:][choose_idx].tolist())
+    for val in choose_vals:
+        d = {}
+        d['value'] = val
+        leaf_dataset = splitDataset(dataset, choose_idx, val)
+        # 删除第choose_idx列
+        np.delete(leaf_dataset, choose_idx, 1)
+        d['node'] = createTree(leaf_dataset, arglabel)
+        tree_dict['leafs'].append(d)
 
-    return TREE_DICT
+    return tree_dict
+
+# 遍历决策树，对测试数据进行分类
+def DTwalk(test_dataset, arglabel, dt):
+    if dt['label']:
+        return dt['label']
+
+    # 求出决策树当前属性名称在arglabel中的列 col
+    # 求出test_dataset中col列的属性值为多少
+    walk_val = test_dataset[arglabel.index(dt['arg'])]
+    for sub in dt['leafs']:
+        sub['value'] == walk_val
+        return DTwalk(test_dataset, arglabel, sub['node'])
+
+    raise MyExcept('error decision tree, lost case of val = {}, of arg:{}'.format(walk_val, dt['arg']))
 
 def main(argv=None):
     if not argv:
@@ -112,7 +154,16 @@ def main(argv=None):
     dataset, args_col, labels = getDataset()
     print('dataset.shape={}'.format(dataset.shape))
 
-    calcShannonEntropy(dataset)
+    dt = createTree(dataset, args_col)
+
+    try:
+        test_dataset = np.array([[1,0]])
+        DTwalk(test_dataset, args_col, dt)
+    except MyExcept as e:
+        print(e)
+        return 2
+
+    return 0
 
 if __name__ == '__main__':
     sys.exit(main())
