@@ -3,7 +3,10 @@
 import sys
 import copy
 import numpy as np
+import json
+import pickle
 from collections import Counter
+import decisiontreeplot as dtplot
 
 class MyExcept(Exception):
     def __init__(self, msg):
@@ -225,6 +228,17 @@ def main(argv=None):
         print('dt2 is:{}'.format(dt2))
         print('classfy result is:{}'.format(labels[classfy]))
         print('classfy2 result is:{}'.format(labels[classfy2]))
+        # import pdb;pdb.set_trace()
+        dtplot.createPlot(dt2, 0, 10)
+
+        # 持久化
+        # json 与 pickle对比，
+        # json 更为通用，且仅支持python基本数据类型，不支持datetime， function 等，多用于http业务
+        # pickle 提供python所有数据类型的序列化
+        # print('json data:{}'.format(json.dumps(dt)))
+        # print('json obj:{}'.format(json.loads(json.dumps(dt))))
+        # print('pickle data:{}'.format(pickle.dumps(dt)))
+        # print('pickle obj:{}'.format(pickle.loads(pickle.dumps(dt))))
     except MyExcept as e:
         print(e)
         return 2
